@@ -108,14 +108,18 @@ antlrcpp::Any SymbolsVisitor::visitDeclarations(AslParser::DeclarationsContext *
 antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->type());
-  std::string ident = ctx->ID()->getText();
-  if (Symbols.findInCurrentScope(ident)) {
-    Errors.declaredIdent(ctx->ID());
-  }
-  else {
-    TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
-    Symbols.addLocalVar(ident, t1);
-  }
+	TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
+	int i = 0;
+	while (ctx->ID(i)) {
+		std::string ident = ctx->ID(i)->getText();
+		if (Symbols.findInCurrentScope(ident)) {
+	    Errors.declaredIdent(ctx->ID(i));
+	  }
+		else {
+	    Symbols.addLocalVar(ident, t1);
+	  }
+		++i;
+	}
   DEBUG_EXIT();
   return 0;
 }
