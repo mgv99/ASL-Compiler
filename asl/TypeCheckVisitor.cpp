@@ -63,8 +63,8 @@ TypeCheckVisitor::TypeCheckVisitor(TypesMgr       & Types,
 antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
-  Symbols.pushThisScope(sc);  
-  for (auto ctxFunc : ctx->function()) { 
+  Symbols.pushThisScope(sc);
+  for (auto ctxFunc : ctx->function()) {
     visit(ctxFunc);
   }
   if (Symbols.noMainProperlyDeclared())
@@ -198,10 +198,22 @@ antlrcpp::Any TypeCheckVisitor::visitArithmetic(AslParser::ArithmeticContext *ct
   TypesMgr::TypeId t1 = getTypeDecor(ctx->expr(0));
   visit(ctx->expr(1));
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(1));
+
+	bool intArithmetic = Types.isIntegerTy(t1) and Types.isIntegerTy(t2);
+	bool floatArithmetic = Types.isFloatTy(t1) and Types.isFloatTy(t2);
+	bool mixArithmetic = (Types.isIntegerTy(t1) and Types.isFloatTy(t2)) or
+		(Types.isFloatTy(t1) and Types.isIntegerTy(t2));
+
   if (((not Types.isErrorTy(t1)) and (not Types.isNumericTy(t1))) or
       ((not Types.isErrorTy(t2)) and (not Types.isNumericTy(t2))))
     Errors.incompatibleOperator(ctx->op);
-  TypesMgr::TypeId t = Types.createIntegerTy();
+
+	TypesMgr::TypeId t;
+	if (floatArithmetic or mixArithmetic) {
+		t = Types.createFloatTy();
+	} else {
+		t = Types.createIntegerTy();
+	}
   putTypeDecor(ctx, t);
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();
@@ -227,8 +239,20 @@ antlrcpp::Any TypeCheckVisitor::visitRelational(AslParser::RelationalContext *ct
 
 antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
   DEBUG_ENTER();
-  TypesMgr::TypeId t = Types.createIntegerTy();
-  putTypeDecor(ctx, t);
+  TypesMgr::TypeId t;
+	if (ctx->INTVAL()) {
+		t = Types.createIntegerTy();
+  	putTypeDecor(ctx, t);
+	} else if (ctx->FLOATVAL()) {
+		t = Types.createFloatTy();
+  	putTypeDecor(ctx, t);
+	} else if (ctx->CHARVAL()) {
+		t = Types.createCharacterTy();
+  	putTypeDecor(ctx, t);
+	} else if (ctx->BOOLVAL()) {
+		t = Types.createBooleanTy();
+  	putTypeDecor(ctx, t);
+	}
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();
   return 0;
@@ -265,6 +289,69 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_EXIT();
   return 0;
 }
+
+
+antlrcpp::Any TypeCheckVisitor::visitParenthesisExpr(AslParser::ParenthesisExprContext *ctx) {
+	DEBUG_ENTER();
+	visit(ctx->expr());
+	TypesMgr::TypeId t = getTypeDecor(ctx->expr());
+  putTypeDecor(ctx, t);
+  putIsLValueDecor(ctx, false);
+	DEBUG_EXIT();
+	return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitArithmeticUnary(AslParser::ArithmeticUnaryContext *ctx) {
+	DEBUG_ENTER();
+	visit(ctx->expr());
+	TypesMgr::TypeId t1 = getTypeDecor(ctx->expr());
+	std::string oper = ctx->op->getText();
+	if ((not Types.isErrorTy(t1)) and (not Types.isNumericTy(t1)))
+		Errors.incompatibleOperator(ctx->op);
+
+	TypesMgr::TypeId t = Types.createIntegerTy();
+	if (Types.isFloatTy(t1))
+		putTypeDecor(ctx, t1);
+	else
+		putTypeDecor(ctx, t);
+
+	putIsLValueDecor(ctx, false);
+	DEBUG_EXIT();
+	return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitBooleanUnary(AslParser::BooleanUnaryContext *ctx) {
+	DEBUG_ENTER();
+	visit(ctx->expr());
+	TypesMgr::TypeId t1 = getTypeDecor(ctx->expr());
+	std::string oper = ctx->op->getText();
+	if ((not Types.isErrorTy(t1)) and (not Types.isBooleanTy(t1)))
+		Errors.incompatibleOperator(ctx->op);
+	TypesMgr::TypeId t = Types.createBooleanTy();
+	putTypeDecor(ctx, t);
+	putIsLValueDecor(ctx, false);
+	DEBUG_EXIT();
+	return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitBoolean(AslParser::BooleanContext *ctx) {
+	DEBUG_ENTER();
+  visit(ctx->expr(0));
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->expr(0));
+  visit(ctx->expr(1));
+  TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(1));
+  std::string oper = ctx->op->getText();
+	if (((not Types.isErrorTy(t1)) and (not Types.isBooleanTy(t1))) or
+      ((not Types.isErrorTy(t2)) and (not Types.isBooleanTy(t2))))
+    Errors.incompatibleOperator(ctx->op);
+  TypesMgr::TypeId t = Types.createBooleanTy();
+  putTypeDecor(ctx, t);
+  putIsLValueDecor(ctx, false);
+  DEBUG_EXIT();
+  return 0;
+}
+
+
 
 
 // Getters for the necessary tree node atributes:

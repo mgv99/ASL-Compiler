@@ -85,10 +85,14 @@ int main(int argc, const char* argv[]) {
   // call the parser and get the parse tree
   antlr4::tree::ParseTree *tree = parser.program();
 
-  // check for lexical or syntactical errors
-  if (lexer.getNumberOfSyntaxErrors() > 0 or
-      parser.getNumberOfSyntaxErrors() > 0) {
-    std::cout << "Lexical and/or syntactical errors have been found." << std::endl;
+  // check for lexical
+  if (lexer.getNumberOfSyntaxErrors() > 0) {
+    std::cout << "Lexical errors have been found." << std::endl;
+    return EXIT_FAILURE;
+  }
+  // check for syntactical errors
+  if (parser.getNumberOfSyntaxErrors() > 0) {
+    std::cout << "Syntactical errors have been found." << std::endl;
     return EXIT_FAILURE;
   }
 

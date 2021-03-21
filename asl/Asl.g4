@@ -50,6 +50,9 @@ variable_decl
         ;
 
 type    : INT
+        | FLOAT
+        | BOOL
+        | CHAR
         ;
 
 statements
@@ -77,10 +80,36 @@ left_expr
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : expr op=MUL expr                    # arithmetic
+expr    : '(' expr ')'                        # parenthesisExpr
+
+        | op=PLUS expr                        # arithmeticUnary
+        | op=SUB expr                         # arithmeticUnary
+        | op=NOT expr                         # booleanUnary
+
+        | expr op=MUL expr                    # arithmetic
+        | expr op=DIV expr                    # arithmetic
+        | expr op=MOD expr                    # arithmetic
+
         | expr op=PLUS expr                   # arithmetic
+        | expr op=SUB expr                    # arithmetic
+
         | expr op=EQUAL expr                  # relational
+        | expr op=NEQUAL expr                 # relational
+        | expr op=G expr                      # relational
+        | expr op=L expr                      # relational
+        | expr op=GEQ expr                    # relational
+        | expr op=LEQ expr                    # relational
+
+        | expr op=AND expr                    # boolean
+        | expr op=OR expr                     # boolean
+
+
         | INTVAL                              # value
+        | FLOATVAL                            # value
+        | CHARVAL                             # value
+        | BOOLVAL                             # value
+
+
         | ident                               # exprIdent
         ;
 
@@ -91,22 +120,50 @@ ident   : ID
 /// Lexer Rules
 //////////////////////////////////////////////////
 
+AND       : 'and';
+OR        : 'or' ;
+NOT       : 'not';
 ASSIGN    : '=' ;
 EQUAL     : '==' ;
+NEQUAL    : '!=' ;
+G         : '>' ;
+L         : '<' ;
+GEQ       : '>=' ;
+LEQ       : '<=' ;
 PLUS      : '+' ;
+SUB       : '-' ;
 MUL       : '*';
+DIV       : '/' ;
+MOD       : '%' ;
+
 VAR       : 'var';
 INT       : 'int';
+FLOAT     : 'float' ;
+BOOL      : 'bool' ;
+CHAR      : 'char' ;
+
 IF        : 'if' ;
 THEN      : 'then' ;
 ELSE      : 'else' ;
 ENDIF     : 'endif' ;
+
+WHILE     : 'while' ;
+DO        : 'do' ;
+ENDWHILE  : 'endwhile';
+
 FUNC      : 'func' ;
 ENDFUNC   : 'endfunc' ;
+
 READ      : 'read' ;
 WRITE     : 'write' ;
+
 ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 INTVAL    : ('0'..'9')+ ;
+FLOATVAL  : ('0'..'9')+ '.' ('0'..'9')+ ;
+CHARVAL   : '\'' ('a'..'z'|'A'..'Z') '\'' ;
+BOOLVAL   : ('true' | 'false') ; // mejor con TRUE | FALSE ?????
+TRUE      : 'true' ;
+FALSE     : 'false' ;
 
 // Strings (in quotes) with escape sequences
 STRING    : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;

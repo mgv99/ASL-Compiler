@@ -80,6 +80,13 @@ public:
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
 
+
+  antlrcpp::Any visitParenthesisExpr(AslParser::ParenthesisExprContext *ctx);
+  antlrcpp::Any visitArithmeticUnary(AslParser::ArithmeticUnaryContext *ctx);
+  antlrcpp::Any visitBooleanUnary(AslParser::BooleanUnaryContext *ctx);
+  antlrcpp::Any visitBoolean(AslParser::BooleanContext *ctx);
+
+
 private:
 
   // Attributes
