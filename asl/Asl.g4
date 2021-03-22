@@ -38,7 +38,14 @@ program : function+ EOF
 
 // A function has a name, a list of parameters and a list of statements
 function
-        : FUNC ID '(' ')' declarations statements ENDFUNC
+        // Necesitaré una regla para cada tipo de función (con/sin params) ???
+        //: FUNC ID '(' ')' ( ':' type)? declarations statements ENDFUNC
+
+        : FUNC ID '(' ( (ID ':' type) (',' ID ':' type)* )? ')' ( ':' type_ret)? declarations statements ENDFUNC
+        ;
+
+type_ret
+        : type
         ;
 
 declarations

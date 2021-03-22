@@ -78,21 +78,42 @@ antlrcpp::Any SymbolsVisitor::visitProgram(AslParser::ProgramContext *ctx) {
 
 antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
-  std::string funcName = ctx->ID()->getText();
+  std::string funcName = ctx->ID(0)->getText();
   SymTable::ScopeId sc = Symbols.pushNewScope(funcName);
   putScopeDecor(ctx, sc);
-  visit(ctx->declarations());
-  // Symbols.print();
+  //Symbols.print();
+	std::vector<TypesMgr::TypeId> lParamsTy;
+	int i = 1;
+	while (ctx->ID(i)) {
+		std::string identVar = ctx->ID(i)->getText();
+		if (Symbols.findInCurrentScope(identVar)) {
+			Errors.declaredIdent(ctx->ID(i));
+		}
+		else {
+			visit(ctx->type(i-1));
+			TypesMgr::TypeId tVar = getTypeDecor(ctx->type(i-1));
+			Symbols.addLocalVar(identVar, tVar);
+			lParamsTy.push_back(tVar);
+		}
+		++i;
+	}
+	visit(ctx->declarations());
   Symbols.popScope();
-  std::string ident = ctx->ID()->getText();
-  if (Symbols.findInCurrentScope(ident)) {
-    Errors.declaredIdent(ctx->ID());
+
+  if (Symbols.findInCurrentScope(funcName)) {
+    Errors.declaredIdent(ctx->ID(0));
   }
   else {
-    std::vector<TypesMgr::TypeId> lParamsTy;
-    TypesMgr::TypeId tRet = Types.createVoidTy();
+    TypesMgr::TypeId tRet;
+		if (ctx->type_ret()) {
+			visit(ctx->type_ret());
+			tRet = getTypeDecor(ctx->type_ret());
+		}
+		else {
+			tRet = Types.createVoidTy();
+		}
     TypesMgr::TypeId tFunc = Types.createFunctionTy(lParamsTy, tRet);
-    Symbols.addFunction(ident, tFunc);
+    Symbols.addFunction(funcName, tFunc);
   }
   DEBUG_EXIT();
   return 0;
@@ -109,16 +130,14 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   DEBUG_ENTER();
   visit(ctx->type());
 	TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
-	int i = 0;
-	while (ctx->ID(i)) {
-		std::string ident = ctx->ID(i)->getText();
+	for (auto ctxId : ctx->ID()) { 
+		std::string ident = ctxId->getText();
 		if (Symbols.findInCurrentScope(ident)) {
-	    Errors.declaredIdent(ctx->ID(i));
+	    Errors.declaredIdent(ctxId);
 	  }
 		else {
 	    Symbols.addLocalVar(ident, t1);
 	  }
-		++i;
 	}
   DEBUG_EXIT();
   return 0;

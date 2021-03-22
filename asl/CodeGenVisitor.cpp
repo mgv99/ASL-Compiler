@@ -73,9 +73,10 @@ antlrcpp::Any CodeGenVisitor::visitProgram(AslParser::ProgramContext *ctx) {
 
 antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
+  // NO SE TRATAN LOS ARGUMENTOS DE LA FUNCIÓN, ENTRE OTRAS COSAS...
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
-  subroutine subr(ctx->ID()->getText());
+  subroutine subr(ctx->ID(0)->getText());
   codeCounters.reset();
   std::vector<var> && lvars = visit(ctx->declarations());
   for (auto & onevar : lvars) {
