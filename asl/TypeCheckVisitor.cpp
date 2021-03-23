@@ -299,13 +299,19 @@ antlrcpp::Any TypeCheckVisitor::visitProcCallInExpr(AslParser::ProcCallInExprCon
 	if (not Types.isFunctionTy(identTy) and not Types.isErrorTy(identTy)) {
     Errors.isNotCallable(ctx->ident());
   }
+	TypesMgr::TypeId errorTy = Types.createErrorTy();
 	if (Types.isFunctionTy(identTy)) {
 		TypesMgr::TypeId returnTy = Types.getFuncReturnType(identTy);
-		putTypeDecor(ctx, returnTy);
+		if (Types.isVoidTy(returnTy)) {
+			Errors.isNotFunction(ctx->ident());
+	    putTypeDecor(ctx, errorTy);
+		}
+		else {
+			putTypeDecor(ctx, returnTy);
+		}
 	}
 	else {
-		TypesMgr::TypeId te = Types.createErrorTy();
-    putTypeDecor(ctx, te);
+    putTypeDecor(ctx, errorTy);
 	}
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();

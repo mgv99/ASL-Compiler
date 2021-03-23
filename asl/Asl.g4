@@ -80,7 +80,7 @@ statement
           // if-then-else statement (else is optional)
         | IF expr THEN statements (ELSE statements)? ENDIF # ifStmt
           // A function/procedure call has a list of arguments in parenthesis (possibly empty)
-        | ident '(' ')' ';'                                # procCall
+        | ident '('(expr (',' expr)*)? ')' ';'             # procCall
           // Read a variable
         | READ left_expr ';'                               # readStmt
           // Write an expression
