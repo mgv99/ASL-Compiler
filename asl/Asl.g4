@@ -38,10 +38,8 @@ program : function+ EOF
 
 // A function has a name, a list of parameters and a list of statements
 function
-        // Necesitaré una regla para cada tipo de función (con/sin params) ???
-        //: FUNC ID '(' ')' ( ':' type)? declarations statements ENDFUNC
-
-        : FUNC ID '(' ( (ID ':' type) (',' ID ':' type)* )? ')' ( ':' type_ret)? declarations statements ENDFUNC
+        : FUNC ID '(' ( (ID ':' type) (',' ID ':' type)* )? ')' ( ':' type_ret)?
+            declarations statements ENDFUNC
         ;
 
 type_ret
@@ -123,17 +121,16 @@ expr    : '(' expr ')'                        # parenthesisExpr
         | expr op=GEQ expr                    # relational
         | expr op=LEQ expr                    # relational
 
-        | expr op=AND expr                    # boolean
-        | expr op=OR expr                     # boolean
+        | expr op=AND expr                    # booleanBinary
+        | expr op=OR expr                     # booleanBinary
 
         | array_element                       # arrayValue
-
         | INTVAL                              # value
         | FLOATVAL                            # value
         | CHARVAL                             # value
         | BOOLVAL                             # value
 
-
+        | ident '('  ')'                      # procCallInExpr
         | ident                               # exprIdent
         ;
 

@@ -81,13 +81,14 @@ public:
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitArrayValue(AslParser::ArrayValueContext *ctx);
+  antlrcpp::Any visitProcCallInExpr(AslParser::ProcCallInExprContext *ctx);
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
 
 
   antlrcpp::Any visitParenthesisExpr(AslParser::ParenthesisExprContext *ctx);
   antlrcpp::Any visitArithmeticUnary(AslParser::ArithmeticUnaryContext *ctx);
   antlrcpp::Any visitBooleanUnary(AslParser::BooleanUnaryContext *ctx);
-  antlrcpp::Any visitBoolean(AslParser::BooleanContext *ctx);
+  antlrcpp::Any visitBooleanBinary(AslParser::BooleanBinaryContext *ctx);
   antlrcpp::Any visitArray_element(AslParser::Array_elementContext *ctx);
 
 

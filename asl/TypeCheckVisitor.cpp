@@ -292,6 +292,26 @@ antlrcpp::Any TypeCheckVisitor::visitArrayValue(AslParser::ArrayValueContext *ct
 
 }
 
+antlrcpp::Any TypeCheckVisitor::visitProcCallInExpr(AslParser::ProcCallInExprContext *ctx) {
+	DEBUG_ENTER();
+  visit(ctx->ident());
+	TypesMgr::TypeId identTy = getTypeDecor(ctx->ident());
+	if (not Types.isFunctionTy(identTy) and not Types.isErrorTy(identTy)) {
+    Errors.isNotCallable(ctx->ident());
+  }
+	if (Types.isFunctionTy(identTy)) {
+		TypesMgr::TypeId returnTy = Types.getFuncReturnType(identTy);
+		putTypeDecor(ctx, returnTy);
+	}
+	else {
+		TypesMgr::TypeId te = Types.createErrorTy();
+    putTypeDecor(ctx, te);
+	}
+  putIsLValueDecor(ctx, false);
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
@@ -368,7 +388,7 @@ antlrcpp::Any TypeCheckVisitor::visitBooleanUnary(AslParser::BooleanUnaryContext
 	return 0;
 }
 
-antlrcpp::Any TypeCheckVisitor::visitBoolean(AslParser::BooleanContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitBooleanBinary(AslParser::BooleanBinaryContext *ctx) {
 	DEBUG_ENTER();
   visit(ctx->expr(0));
   TypesMgr::TypeId t1 = getTypeDecor(ctx->expr(0));

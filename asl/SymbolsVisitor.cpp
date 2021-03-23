@@ -112,6 +112,7 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
 		else {
 			tRet = Types.createVoidTy();
 		}
+
     TypesMgr::TypeId tFunc = Types.createFunctionTy(lParamsTy, tRet);
     Symbols.addFunction(funcName, tFunc);
   }
@@ -143,21 +144,39 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   return 0;
 }
 
+antlrcpp::Any SymbolsVisitor::visitType_ret(AslParser::Type_retContext *ctx) {
+  DEBUG_ENTER();
+	visit(ctx->basic_type());
+	TypesMgr::TypeId t = getTypeDecor(ctx->basic_type());
+	putTypeDecor(ctx, t);
+	DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any SymbolsVisitor::visitBasic_type(AslParser::Basic_typeContext *ctx) {
+	DEBUG_ENTER();
+	TypesMgr::TypeId elemTy;
+	if (ctx->INT()) {
+		elemTy = Types.createIntegerTy();
+	}
+	if (ctx->FLOAT()) {
+		elemTy = Types.createFloatTy();
+	}
+	if (ctx->CHAR()) {
+		elemTy = Types.createCharacterTy();
+	}
+	if (ctx->BOOL()) {
+		elemTy = Types.createBooleanTy();
+	}
+	putTypeDecor(ctx, elemTy);
+	DEBUG_EXIT();
+	return 0;
+}
+
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
   DEBUG_ENTER();
-	TypesMgr::TypeId elemTy;
-	if (ctx->basic_type()->INT()) {
-    elemTy = Types.createIntegerTy();
-  }
-	if (ctx->basic_type()->FLOAT()) {
-    elemTy = Types.createFloatTy();
-  }
-	if (ctx->basic_type()->CHAR()) {
-    elemTy = Types.createCharacterTy();
-  }
-	if (ctx->basic_type()->BOOL()) {
-    elemTy = Types.createBooleanTy();
-  }
+	visit(ctx->basic_type());
+	TypesMgr::TypeId elemTy = getTypeDecor(ctx->basic_type());
 	if (ctx->ARRAY()) {
 		unsigned int size = std::stoi(ctx->INTVAL()->getText());
 		TypesMgr::TypeId arrayTy = Types.createArrayTy(size, elemTy);
