@@ -130,7 +130,7 @@ expr    : '(' expr ')'                        # parenthesisExpr
         | CHARVAL                             # value
         | BOOLVAL                             # value
 
-        | ident '('  ')'                      # procCallInExpr
+        | ident '('(expr (',' expr)*)?')'     # procCallInExpr
         | ident                               # exprIdent
         ;
 
