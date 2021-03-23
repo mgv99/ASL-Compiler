@@ -196,11 +196,20 @@ antlrcpp::Any TypeCheckVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx)
 
 antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
   DEBUG_ENTER();
-  visit(ctx->ident());
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  putTypeDecor(ctx, t1);
-  bool b = getIsLValueDecor(ctx->ident());
-  putIsLValueDecor(ctx, b);
+	if(ctx->ident()) {
+		visit(ctx->ident());
+	  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+	  putTypeDecor(ctx, t1);
+		bool b = getIsLValueDecor(ctx->ident());
+		putIsLValueDecor(ctx, b);
+	}
+  else {
+		visit(ctx->array_element());
+		TypesMgr::TypeId t2 = getTypeDecor(ctx->array_element());
+		putTypeDecor(ctx, t2);
+		bool b = getIsLValueDecor(ctx->array_element());
+		putIsLValueDecor(ctx, b);
+	}
   DEBUG_EXIT();
   return 0;
 }
@@ -269,6 +278,18 @@ antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();
   return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitArrayValue(AslParser::ArrayValueContext *ctx) {
+	DEBUG_ENTER();
+	visit(ctx->array_element());
+	TypesMgr::TypeId elemTy = getTypeDecor(ctx->array_element());
+	putTypeDecor(ctx, elemTy);
+	bool b = getIsLValueDecor(ctx->array_element());
+	putIsLValueDecor(ctx, b);
+	DEBUG_EXIT();
+  return 0;
+
 }
 
 antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
@@ -362,6 +383,28 @@ antlrcpp::Any TypeCheckVisitor::visitBoolean(AslParser::BooleanContext *ctx) {
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();
   return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitArray_element(AslParser::Array_elementContext *ctx) {
+	DEBUG_ENTER();
+	visit(ctx->ident());
+	TypesMgr::TypeId identTy = getTypeDecor(ctx->ident());
+	if ((not Types.isErrorTy(identTy)) and (not Types.isArrayTy(identTy)))
+		Errors.nonArrayInArrayAccess(ctx);
+	visit(ctx->expr());
+	TypesMgr::TypeId exprTy = getTypeDecor(ctx->expr());
+	if ((not Types.isErrorTy(exprTy)) and (not Types.isIntegerTy(exprTy)))
+		Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+
+	if (Types.isArrayTy(identTy)) {
+		putTypeDecor(ctx, Types.getArrayElemType(identTy));
+		putIsLValueDecor(ctx, true);
+	} else {
+		putTypeDecor(ctx, Types.createErrorTy());
+		putIsLValueDecor(ctx, false);
+	}
+	DEBUG_EXIT();
+	return 0;
 }
 
 

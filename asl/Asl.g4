@@ -45,7 +45,7 @@ function
         ;
 
 type_ret
-        : type
+        : basic_type
         ;
 
 declarations
@@ -56,7 +56,14 @@ variable_decl
         : VAR ID (',' ID)* ':' type
         ;
 
-type    : INT
+
+type
+        : ARRAY '[' INTVAL ']' OF basic_type
+        | basic_type
+        ;
+
+basic_type
+        : INT
         | FLOAT
         | BOOL
         | CHAR
@@ -88,6 +95,11 @@ statement
 // Grammar for left expressions (l-values in C++)
 left_expr
         : ident
+        | array_element
+        ;
+
+array_element
+        : ident '[' expr ']'
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
@@ -114,6 +126,7 @@ expr    : '(' expr ')'                        # parenthesisExpr
         | expr op=AND expr                    # boolean
         | expr op=OR expr                     # boolean
 
+        | array_element                       # arrayValue
 
         | INTVAL                              # value
         | FLOATVAL                            # value
@@ -152,6 +165,8 @@ INT       : 'int';
 FLOAT     : 'float' ;
 BOOL      : 'bool' ;
 CHAR      : 'char' ;
+ARRAY     : 'array' ;
+OF        : 'of' ;
 
 IF        : 'if' ;
 THEN      : 'then' ;
