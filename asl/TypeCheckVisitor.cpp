@@ -329,11 +329,29 @@ antlrcpp::Any TypeCheckVisitor::visitProcCallInExpr(AslParser::ProcCallInExprCon
 	DEBUG_ENTER();
   visit(ctx->ident());
 	TypesMgr::TypeId identTy = getTypeDecor(ctx->ident());
+	// check ident es una función
 	if (not Types.isFunctionTy(identTy) and not Types.isErrorTy(identTy)) {
     Errors.isNotCallable(ctx->ident());
   }
 	TypesMgr::TypeId errorTy = Types.createErrorTy();
+
+	int i = 0;
+	// check los parametros tienen el tipo adecuado
+	while (ctx->expr(i)) {
+		visit(ctx->expr(i));
+		TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
+		TypesMgr::TypeId tParam = Types.getParameterType(identTy, i);
+		if ((not Types.isErrorTy(tExpr)) and (not Types.copyableTypes(tParam, tExpr)))
+			Errors.incompatibleParameter(ctx->expr(i), i+1, ctx);
+		++i;
+	}
 	if (Types.isFunctionTy(identTy)) {
+		// check numero de parametros correcto
+		int numParams = Types.getNumOfParameters(identTy);
+		if (numParams != i)
+			Errors.numberOfParameters(ctx->ident());
+
+		// check no es void (y añade el tipo del return)
 		TypesMgr::TypeId returnTy = Types.getFuncReturnType(identTy);
 		if (Types.isVoidTy(returnTy)) {
 			Errors.isNotFunction(ctx->ident());
