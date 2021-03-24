@@ -79,7 +79,18 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
-  // Symbols.print();
+  //Symbols.print();
+	TypesMgr::TypeId tRet;
+	if (ctx->type_ret()) {
+		//visit(ctx->type_ret());
+		tRet = getTypeDecor(ctx->type_ret());
+	}
+	else {
+		tRet = Types.createVoidTy();
+	}
+	// VER SI ESTO SE PUEDE HACER DE OTRA MANERA, SIN MIRAR TYPE_RET (ES RARO PQ TYPE_RET SE VISITA EN SYMBOLSVISITOR)
+	Symbols.setCurrentFunctionTy(tRet);
+
   visit(ctx->statements());
   Symbols.popScope();
   DEBUG_EXIT();
@@ -149,9 +160,31 @@ antlrcpp::Any TypeCheckVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx)
 	if ((not Types.isErrorTy(t1)) and (not Types.isBooleanTy(t1)))
 		Errors.booleanRequired(ctx);
 	visit(ctx->statements());
+	DEBUG_EXIT();
 	return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
+	DEBUG_ENTER();
+	TypesMgr::TypeId retTy;
+	if (ctx->expr()) {
+		visit(ctx->expr());
+		retTy = getTypeDecor(ctx->expr());
+	}
+	else {
+		retTy = Types.createVoidTy();
+	}
+	TypesMgr::TypeId funcTy = Symbols.getCurrentFunctionTy();
+	//std::cout << Types.to_string(funcTy) << std::endl;
+	//std::cout << Types.to_string(retTy) << std::endl;
+	//std::cout << "================" << std::endl;
+
+	if (not Types.copyableTypes(funcTy, retTy)) {
+		Errors.incompatibleReturn(ctx->RETURN());
+	}
+	DEBUG_EXIT();
+	return 0;
+}
 
 antlrcpp::Any TypeCheckVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   DEBUG_ENTER();
