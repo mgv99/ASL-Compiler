@@ -107,12 +107,14 @@ expr    : '(' expr ')'                        # parenthesisExpr
         | op=SUB expr                         # arithmeticUnary
         | op=NOT expr                         # booleanUnary
 
-        | expr op=MUL expr                    # arithmetic
-        | expr op=DIV expr                    # arithmetic
-        | expr op=MOD expr                    # arithmetic
 
-        | expr op=PLUS expr                   # arithmetic
-        | expr op=SUB expr                    # arithmetic
+        //prioridad de MOD, MUL y DIV???
+        | expr op=MOD expr                    # arithmeticBinary
+        | expr op=MUL expr                    # arithmeticBinary
+        | expr op=DIV expr                    # arithmeticBinary
+
+        | expr op=PLUS expr                   # arithmeticBinary
+        | expr op=SUB expr                    # arithmeticBinary
 
         | expr op=EQUAL expr                  # relational
         | expr op=NEQUAL expr                 # relational

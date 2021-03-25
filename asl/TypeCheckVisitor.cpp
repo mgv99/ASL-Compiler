@@ -189,10 +189,29 @@ antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ct
 antlrcpp::Any TypeCheckVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  if (not Types.isFunctionTy(t1) and not Types.isErrorTy(t1)) {
+  TypesMgr::TypeId identTy = getTypeDecor(ctx->ident());
+  if (not Types.isFunctionTy(identTy) and not Types.isErrorTy(identTy)) {
     Errors.isNotCallable(ctx->ident());
   }
+	int numParams = 0;
+	if (Types.isFunctionTy(identTy))
+		numParams = Types.getNumOfParameters(identTy);
+	int i = 0;
+	// check los parametros tienen el tipo adecuado
+	while (ctx->expr(i)) {
+		visit(ctx->expr(i));
+		if (i < numParams) {
+			TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
+			TypesMgr::TypeId tParam = Types.getParameterType(identTy, i);
+			if ((not Types.isErrorTy(tExpr)) and (not Types.copyableTypes(tParam, tExpr)))
+				Errors.incompatibleParameter(ctx->expr(i), i+1, ctx);
+		}
+		++i;
+	}
+	// check numero de parametros correcto
+	if (Types.isFunctionTy(identTy) and (numParams != i)) {
+			Errors.numberOfParameters(ctx->ident());
+	}
   DEBUG_EXIT();
   return 0;
 }
@@ -247,26 +266,34 @@ antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx)
   return 0;
 }
 
-antlrcpp::Any TypeCheckVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitArithmeticBinary(AslParser::ArithmeticBinaryContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->expr(0));
   TypesMgr::TypeId t1 = getTypeDecor(ctx->expr(0));
   visit(ctx->expr(1));
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(1));
 
-	bool intArithmetic = Types.isIntegerTy(t1) and Types.isIntegerTy(t2);
 	bool floatArithmetic = Types.isFloatTy(t1) and Types.isFloatTy(t2);
 	bool mixArithmetic = (Types.isIntegerTy(t1) and Types.isFloatTy(t2)) or
 		(Types.isFloatTy(t1) and Types.isIntegerTy(t2));
 
   if (((not Types.isErrorTy(t1)) and (not Types.isNumericTy(t1))) or
-      ((not Types.isErrorTy(t2)) and (not Types.isNumericTy(t2))))
-    Errors.incompatibleOperator(ctx->op);
+      ((not Types.isErrorTy(t2)) and (not Types.isNumericTy(t2)))) {
+				Errors.incompatibleOperator(ctx->op);
+			}
 
-	TypesMgr::TypeId t;
-	if (floatArithmetic or mixArithmetic) {
+	else if ((ctx->op->getText() == "%") and
+			(((not Types.isErrorTy(t1)) and (not Types.isIntegerTy(t1))) or
+      ((not Types.isErrorTy(t2)) and (not Types.isIntegerTy(t2))))) {
+		std::cout << Types.to_string(1) << "---" << Types.to_string(t2) << std::endl;
+    Errors.incompatibleOperator(ctx->op);
+	}
+	TypesMgr::TypeId t; //	solucionar esto
+	if ((floatArithmetic or mixArithmetic) and (ctx->op->getText() == "%")) {
+		t = Types.createIntegerTy();
+	}	else if (floatArithmetic or mixArithmetic)  {
 		t = Types.createFloatTy();
-	} else {
+	}	else {
 		t = Types.createIntegerTy();
 	}
   putTypeDecor(ctx, t);
@@ -335,19 +362,23 @@ antlrcpp::Any TypeCheckVisitor::visitProcCallInExpr(AslParser::ProcCallInExprCon
   }
 	TypesMgr::TypeId errorTy = Types.createErrorTy();
 
+	int numParams = 0;
+	if (Types.isFunctionTy(identTy))
+		numParams = Types.getNumOfParameters(identTy);
 	int i = 0;
 	// check los parametros tienen el tipo adecuado
 	while (ctx->expr(i)) {
 		visit(ctx->expr(i));
-		TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
-		TypesMgr::TypeId tParam = Types.getParameterType(identTy, i);
-		if ((not Types.isErrorTy(tExpr)) and (not Types.copyableTypes(tParam, tExpr)))
-			Errors.incompatibleParameter(ctx->expr(i), i+1, ctx);
+		if (i < numParams) {
+			TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
+			TypesMgr::TypeId tParam = Types.getParameterType(identTy, i);
+			if ((not Types.isErrorTy(tExpr)) and (not Types.copyableTypes(tParam, tExpr)))
+				Errors.incompatibleParameter(ctx->expr(i), i+1, ctx);
+		}
 		++i;
 	}
 	if (Types.isFunctionTy(identTy)) {
 		// check numero de parametros correcto
-		int numParams = Types.getNumOfParameters(identTy);
 		if (numParams != i)
 			Errors.numberOfParameters(ctx->ident());
 

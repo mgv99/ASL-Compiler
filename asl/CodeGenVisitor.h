@@ -77,7 +77,7 @@ public:
   antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
   antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
-  antlrcpp::Any visitArithmetic(AslParser::ArithmeticContext *ctx);
+  antlrcpp::Any visitArithmeticBinary(AslParser::ArithmeticBinaryContext *ctx);
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
@@ -104,7 +104,7 @@ private:
   // generate the three attributes. Others, like statements, only
   // generate the instruction list.
   class CodeAttribs {
-    
+
   public:
     // Constructors
     CodeAttribs(const std::string & addr,
@@ -123,5 +123,5 @@ private:
     instructionList code;
 
   };  // class CodeAttribs
-  
+
 };  // class CodeGenVisitor
