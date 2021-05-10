@@ -289,9 +289,7 @@ antlrcpp::Any TypeCheckVisitor::visitArithmeticBinary(AslParser::ArithmeticBinar
     Errors.incompatibleOperator(ctx->op);
 	}
 	TypesMgr::TypeId t; //	solucionar esto
-	if ((floatArithmetic or mixArithmetic) and (ctx->op->getText() == "%")) {
-		t = Types.createIntegerTy();
-	}	else if (floatArithmetic or mixArithmetic)  {
+	if ((floatArithmetic or mixArithmetic) and (ctx->op->getText() != "%")) {
 		t = Types.createFloatTy();
 	}	else {
 		t = Types.createIntegerTy();
@@ -301,6 +299,7 @@ antlrcpp::Any TypeCheckVisitor::visitArithmeticBinary(AslParser::ArithmeticBinar
   DEBUG_EXIT();
   return 0;
 }
+
 
 antlrcpp::Any TypeCheckVisitor::visitRelational(AslParser::RelationalContext *ctx) {
   DEBUG_ENTER();

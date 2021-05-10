@@ -185,7 +185,7 @@ RETURN    : 'return' ;
 
 INTVAL    : ('0'..'9')+ ;
 FLOATVAL  : ('0'..'9')+ '.' ('0'..'9')+ ;
-CHARVAL   : '\'' ('a'..'z'|'A'..'Z') '\'' ;
+CHARVAL   : '\'' ('a'..'z'|'A'..'Z'|'0'..'9'|'@'|'\\n'|'\\t'|'\\\'') '\'' ;
 BOOLVAL   : ('true' | 'false') ; // mejor con TRUE | FALSE ?????
 
 ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
