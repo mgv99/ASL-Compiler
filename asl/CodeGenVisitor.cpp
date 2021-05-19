@@ -145,6 +145,28 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   return code;
 }
 
+antlrcpp::Any CodeGenVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code;
+  CodeAttribs     && codAtsE = visit(ctx->expr());
+  std::string          addr1 = codAtsE.addr;
+  instructionList &    code1 = codAtsE.code;
+  instructionList &&   code2 = visit(ctx->statements()); // DO Statements
+  std::string whileNum = codeCounters.newLabelWHILE();
+  std::string labelWhile = "while"+whileNum;
+  std::string labelEndWhile = "endwhile"+whileNum;
+
+  code = instruction::LABEL(labelWhile) ||
+         code1 ||
+         instruction::FJUMP(addr1, labelEndWhile) ||
+         code2 ||
+         instruction::UJUMP(labelWhile) ||
+         instruction::LABEL(labelEndWhile);
+
+  DEBUG_EXIT();
+  return code;
+}
+
 antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   DEBUG_ENTER();
   instructionList code;
@@ -155,8 +177,11 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   //instructionList &&   code3 = visit(ctx->statements(1)); // ELSE Statements
   std::string label = codeCounters.newLabelIF();
   std::string labelEndIf = "endif"+label;
-  code = code1 || instruction::FJUMP(addr1, labelEndIf) ||
-         code2 || instruction::LABEL(labelEndIf); // FALTA ESCRIBIR ELSE STATEMENTS!!!!
+  code = code1 ||
+         instruction::FJUMP(addr1, labelEndIf) ||
+         code2 ||
+         instruction::LABEL(labelEndIf);
+         // FALTA ESCRIBIR ELSE STATEMENTS!!!!
   DEBUG_EXIT();
   return code;
 }
@@ -424,7 +449,7 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
     code = instruction::CHLOAD(temp, ctx->getText());
   else if (ctx->BOOLVAL() and ctx->getText()=="true")
     code = instruction::ILOAD(temp, "1");
-  else if (ctx->BOOLVAL() and ctx->getText()=="true")
+  else if (ctx->BOOLVAL() and ctx->getText()=="false")
     code = instruction::ILOAD(temp, "0");
   CodeAttribs codAts(temp, "", code);
   DEBUG_EXIT();
