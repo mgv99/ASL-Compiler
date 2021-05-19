@@ -77,12 +77,22 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
   subroutine subr(ctx->ID(0)->getText());
+  int i = 1;
+  if (ctx->ID(0)->getText() != "main") {
+    subr.add_param("_result"); //en funciones void este param no será asignado, mirar visitReturnStmt
+    while (ctx->ID(i)) {
+      std::string pName = ctx->ID(i)->getText();
+      subr.add_param(pName);
+      ++i;
+    }
+  }
   codeCounters.reset();
   std::vector<var> && lvars = visit(ctx->declarations());
   for (auto & onevar : lvars) {
     subr.add_var(onevar);
   }
   instructionList && code = visit(ctx->statements());
+  // ESTE RETURN ES NECESARIO? (YA VENIA PUESTO) [EN MAIN ES NECESARIO]
   code = code || instruction(instruction::RETURN());
   subr.set_instructions(code);
   Symbols.popScope();
@@ -191,7 +201,20 @@ antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   instructionList code;
   // std::string name = ctx->ident()->ID()->getSymbol()->getText();
   std::string name = ctx->ident()->getText();
-  code = instruction::CALL(name);
+
+  int i = 0;
+  while (ctx->expr(i)) {
+    CodeAttribs     && codAt1 = visit(ctx->expr(i));
+    std::string         addr1 = codAt1.addr;
+    instructionList &   code1 = codAt1.code;
+    code = code || code1 || instruction::PUSH(addr1);
+    ++i;
+  }
+  code = code || instruction::CALL(name);
+  while (i > 0) {
+    code = code || instruction::POP();
+    i--;
+  }
   DEBUG_EXIT();
   return code;
 }
@@ -457,7 +480,31 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
 }
 
 antlrcpp::Any CodeGenVisitor::visitProcCallInExpr(AslParser::ProcCallInExprContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code = instructionList();
+  // std::string name = ctx->ident()->ID()->getSymbol()->getText();
+  std::string name = ctx->ident()->getText();
 
+  code = code || instruction::PUSH(); //Push espacio para return
+  int i = 0;
+  while (ctx->expr(i)) {
+    CodeAttribs     && codAt1 = visit(ctx->expr(i));
+    std::string         addr1 = codAt1.addr;
+    instructionList &   code1 = codAt1.code;
+    code = code || code1 || instruction::PUSH(addr1);
+    ++i;
+  }
+  code = code || instruction::CALL(name);
+  while (i > 0) {
+    code = code || instruction::POP();
+    i--;
+  }
+  std::string temp = "%"+codeCounters.newTEMP();
+  code = code || instruction::POP(temp);
+  CodeAttribs codAts(temp, "", code);
+
+  DEBUG_EXIT();
+  return codAts;
 }
 
 antlrcpp::Any CodeGenVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
@@ -468,6 +515,24 @@ antlrcpp::Any CodeGenVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
 }
 
 
+antlrcpp::Any CodeGenVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code = instructionList();
+  if (ctx->expr()) {
+    CodeAttribs     && codAt1 = visit(ctx->expr());
+    std::string         addr1 = codAt1.addr;
+    instructionList &   code1 = codAt1.code;
+    code = code || code1 ||
+    instruction::LOAD("_result", addr1) ||
+    instruction::RETURN();
+
+  }
+  else {
+    code = instruction::RETURN();
+  }
+  DEBUG_EXIT();
+  return code;
+}
 
 
 antlrcpp::Any CodeGenVisitor::visitIdent(AslParser::IdentContext *ctx) {

@@ -89,6 +89,7 @@ public:
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitProcCallInExpr(AslParser::ProcCallInExprContext *ctx);
   antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
+  antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
 
 
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
