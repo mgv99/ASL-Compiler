@@ -456,23 +456,17 @@ antlrcpp::Any CodeGenVisitor::visitArithmeticBinary(AslParser::ArithmeticBinaryC
       code = code || instruction::SUB(temp, addr1, addr2);
   }
   else { // Some float
-    std::string temp1 = "%"+codeCounters.newTEMP();
-    std::string temp2 = "%"+codeCounters.newTEMP();
+    std::string temp1 = addr1;
+    std::string temp2 = addr2;
     if (Types.isIntegerTy(t1)) {
+      temp1 = "%"+codeCounters.newTEMP();
       code = code ||
              instruction::FLOAT(temp1, addr1);
-             //instruction::LOAD(temp2, addr2);
-             temp2 = addr2;
     }
     else if (Types.isIntegerTy(t2)) {
+      temp2 = "%"+codeCounters.newTEMP();
       code = code ||
-             //instruction::LOAD(temp1, addr1) ||
              instruction::FLOAT(temp2, addr2);
-             temp1 = addr1;
-    }
-    else { // 2 floats
-      temp1 = addr1;
-      temp2 = addr2;
     }
     if (ctx->MUL())
       code = code || instruction::FMUL(temp, temp1, temp2);
@@ -517,36 +511,30 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
       code = code || instruction::LE(temp, addr1, addr2);
   }
   else { // Some float
-    std::string temp1 = "%"+codeCounters.newTEMP();
-    std::string temp2 = "%"+codeCounters.newTEMP();
+    std::string temp1 = addr1;
+    std::string temp2 = addr2;
     if (Types.isIntegerTy(t1)) {
+      temp1 = "%"+codeCounters.newTEMP();
       code = code ||
              instruction::FLOAT(temp1, addr1);
-             //instruction::LOAD(temp2, addr2);
-             temp2 = addr2;
     }
     else if (Types.isIntegerTy(t2)) {
+      temp2 = "%"+codeCounters.newTEMP();
       code = code ||
-             //instruction::LOAD(temp1, addr1) ||
              instruction::FLOAT(temp2, addr2);
-             temp1 = addr1;
-    }
-    else { // 2 floats
-      temp1 = addr1;
-      temp2 = addr2;
     }
     if (ctx->EQUAL())
-      code = code || instruction::FEQ(temp, addr1, addr2);
+      code = code || instruction::FEQ(temp, temp1, temp2);
     else if (ctx->NEQUAL())
-      code = code || instruction::FEQ(temp, addr1, addr2) || instruction::NOT(temp, temp);
+      code = code || instruction::FEQ(temp, temp1, temp2) || instruction::NOT(temp, temp);
     else if (ctx->G())
-      code = code || instruction::FLT(temp, addr2, addr1);
+      code = code || instruction::FLT(temp, temp2, temp1);
     else if (ctx->L())
-      code = code || instruction::FLT(temp, addr1, addr2);
+      code = code || instruction::FLT(temp, temp1, temp2);
     else if (ctx->GEQ())
-      code = code || instruction::FLE(temp, addr2, addr1);
+      code = code || instruction::FLE(temp, temp2, temp1);
     else if (ctx->LEQ())
-      code = code || instruction::FLE(temp, addr1, addr2);
+      code = code || instruction::FLE(temp, temp1, temp2);
   }
   CodeAttribs codAts(temp, "", code);
   DEBUG_EXIT();
