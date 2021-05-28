@@ -92,7 +92,7 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
 		else {
 			visit(ctx->type(i-1));
 			TypesMgr::TypeId tVar = getTypeDecor(ctx->type(i-1));
-			Symbols.addLocalVar(identVar, tVar);
+			Symbols.addParameter(identVar, tVar);
 			lParamsTy.push_back(tVar);
 		}
 		++i;
