@@ -172,11 +172,23 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
     int arraySize = Types.getArraySize(t1);
     std::string offsTemp = "%"+codeCounters.newTEMP();
     std::string elemTemp = "%"+codeCounters.newTEMP();
+    std::string addr1Temp = addr1;
+    std::string addr2Temp = addr2;
+    if (Symbols.isParameterClass(addr1)) {
+      addr1Temp = "%"+codeCounters.newTEMP();
+      code = code ||
+             instruction::LOAD(addr1Temp, addr1); // temp = arrayIdent (NECESARIO)
+    }
+    if (Symbols.isParameterClass(addr2)) {
+      addr2Temp = "%"+codeCounters.newTEMP();
+      code = code ||
+             instruction::LOAD(addr2Temp, addr2); // temp = arrayIdent (NECESARIO)
+    }
     for (int i = 0; i < arraySize; ++i) { //copia por valor. ES POR REFERENCIA??? (sería asignar puntero)
       code = code ||
              instruction::ILOAD(offsTemp, std::to_string(i)) ||
-             instruction::LOADX(elemTemp, addr2, offsTemp) ||
-             instruction::XLOAD(addr1, offsTemp, elemTemp);
+             instruction::LOADX(elemTemp, addr2Temp, offsTemp) ||
+             instruction::XLOAD(addr1Temp, offsTemp, elemTemp);
     }
 
   }
