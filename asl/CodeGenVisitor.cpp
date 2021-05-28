@@ -486,6 +486,13 @@ antlrcpp::Any CodeGenVisitor::visitArithmeticBinary(AslParser::ArithmeticBinaryC
       code = code || instruction::ADD(temp, addr1, addr2);
     else if (ctx->SUB())
       code = code || instruction::SUB(temp, addr1, addr2);
+    else if (ctx->MOD()) {
+      std::string divTemp = "%"+codeCounters.newTEMP();
+      std::string mulTemp = "%"+codeCounters.newTEMP();
+      code = code || instruction::DIV(divTemp, addr1, addr2) ||
+             instruction::MUL(mulTemp, divTemp, addr2) ||
+             instruction::SUB(temp, addr1, mulTemp);
+    }
   }
   else { // Some float
     std::string temp1 = addr1;
@@ -626,12 +633,19 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
     code = instruction::ILOAD(temp, ctx->getText());
   else if (ctx->FLOATVAL())
     code = instruction::FLOAD(temp, ctx->getText());
-  else if (ctx->CHARVAL())
-    code = instruction::CHLOAD(temp, ctx->getText());
   else if (ctx->BOOLVAL() and ctx->getText()=="true")
     code = instruction::ILOAD(temp, "1");
   else if (ctx->BOOLVAL() and ctx->getText()=="false")
     code = instruction::ILOAD(temp, "0");
+  else if (ctx->CHARVAL()) {
+    std::string charval = ctx->getText();
+    if (charval.length() == 3) { // chars normales. e.g. 'a'
+      code = instruction::CHLOAD(temp, charval.substr(1,1));
+    }
+    else { // chars "compuestos". e.g. '\n'
+        code = instruction::CHLOAD(temp, charval.substr(1,2));
+    }
+  }
   CodeAttribs codAts(temp, "", code);
   DEBUG_EXIT();
   return codAts;
