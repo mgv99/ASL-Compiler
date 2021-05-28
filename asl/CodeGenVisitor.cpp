@@ -660,7 +660,17 @@ antlrcpp::Any CodeGenVisitor::visitProcCallInExpr(AslParser::ProcCallInExprConte
              instruction::PUSH(floatTemp);
     }
     else {
-      code = code || instruction::PUSH(addr1);
+      if (Types.isArrayTy(tExpr)) {
+        // push array reference
+        std::string refTemp = "%"+codeCounters.newTEMP();
+        code = code ||
+               instruction::ALOAD(refTemp, addr1) ||
+               instruction::PUSH(refTemp);
+      }
+      else {
+        // push normal
+        code = code || instruction::PUSH(addr1);
+      }
     }
     ++i;
   }
